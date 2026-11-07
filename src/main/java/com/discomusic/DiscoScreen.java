@@ -228,7 +228,7 @@ public class DiscoScreen extends Screen {
         if (view == 0) {
             txt(g, "Music Library (" + Player.lib.size() + ")", cx + 2, ly + 3, WHITE);
             if (Player.lib.isEmpty()) {
-                txt(g, "No songs yet. Put .ogg or .wav files in", cx + 4, ly + 22, GREY);
+                txt(g, "No songs yet. Put .mp3 files in", cx + 4, ly + 22, GREY);
                 txt(g, "mods/music, then click Refresh.", cx + 4, ly + 34, GREY);
             } else list(g, mx, my, cx, ly + 14, cw, bottom - ly - 14, Player.lib, 0);
         } else if (openPl == null) {
@@ -385,7 +385,7 @@ public class DiscoScreen extends Screen {
             txt(g, "Music volume is separate", px, py, GREY);
             txt(g, "from game sounds.", px, py + 11, GREY);
             txt(g, "Folder: mods/music", px, py + 30, GREY);
-            txt(g, "Formats: .ogg  .wav", px, py + 41, GREY);
+            txt(g, "Formats: .mp3 .ogg .wav", px, py + 41, GREY);
         } else {
             txt(g, "Click a key, then press", px, py - 2, GREY);
             txt(g, "a new one. Esc cancels.", px, py + 9, GREY);

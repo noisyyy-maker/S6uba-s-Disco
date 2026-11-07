@@ -1,5 +1,9 @@
 package com.discomusic;
 
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.openal.AL11;
 import org.lwjgl.stb.STBVorbis;
@@ -203,7 +207,9 @@ public final class Player {
         abstract void close();
 
         static Dec open(Path p) throws IOException {
-            return p.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".wav") ? new Wav(p) : new Ogg(p);
+            String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
+            if (n.endsWith(".mp3")) return new Mp3(p);
+            return n.endsWith(".wav") ? new Wav(p) : new Ogg(p);
         }
     }
 
@@ -303,5 +309,76 @@ public final class Player {
         }
 
         void close() { try { ch.close(); } catch (IOException ignored) {} }
+    }
+
+    /** MP3 via the bundled JLayer decoder, streamed frame by frame. */
+    static final class Mp3 extends Dec {
+        final Path path;
+        Bitstream bs;
+        Decoder dec;
+        short[] pending;
+        float msPerFrame = 26f;
+
+        Mp3(Path p) throws IOException {
+            path = p;
+            openStream();
+            try {
+                Header h = bs.readFrame();
+                if (h == null) throw new IOException("bad mp3");
+                msPerFrame = h.ms_per_frame();
+                seconds = h.total_ms((int) Files.size(p)) / 1000.0; // estimate (exact for constant bitrate)
+                SampleBuffer sb = (SampleBuffer) dec.decodeFrame(h, bs);
+                bs.closeFrame();
+                channels = dec.getOutputChannels();
+                rate = dec.getOutputFrequency();
+                pending = Arrays.copyOf(sb.getBuffer(), sb.getBufferLength());
+            } catch (Exception e) {
+                throw new IOException("bad mp3: " + e.getMessage());
+            }
+        }
+
+        private void openStream() throws IOException {
+            bs = new Bitstream(new java.io.BufferedInputStream(Files.newInputStream(path), 65536));
+            dec = new Decoder();
+        }
+
+        private short[] nextFrame() {
+            if (pending != null) { short[] t = pending; pending = null; return t; }
+            try {
+                Header h = bs.readFrame();
+                if (h == null) return null;
+                SampleBuffer sb = (SampleBuffer) dec.decodeFrame(h, bs);
+                bs.closeFrame();
+                return Arrays.copyOf(sb.getBuffer(), sb.getBufferLength());
+            } catch (Exception e) { return null; }
+        }
+
+        int read(ShortBuffer b) {
+            b.clear();
+            int need = 1152 * channels;
+            while (b.remaining() >= need) {
+                short[] f = nextFrame();
+                if (f == null) break;
+                b.put(f);
+            }
+            int n = b.position() / channels;
+            b.limit(b.position()).position(0);
+            return n;
+        }
+
+        void seek(double s) {
+            try {
+                close();
+                openStream();
+                pending = null;
+                int skip = (int) (s * 1000.0 / msPerFrame);
+                for (int i = 0; i < skip; i++) {
+                    if (bs.readFrame() == null) break;
+                    bs.closeFrame();
+                }
+            } catch (Exception ignored) {}
+        }
+
+        void close() { try { bs.close(); } catch (Exception ignored) {} }
     }
 }

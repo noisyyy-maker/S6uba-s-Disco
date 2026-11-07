@@ -3,7 +3,7 @@
 Lightweight in-game music player. Client-side only.
 
 ## Use
-1. Drop `.ogg` or `.wav` files into `mods/music` (loose files in `mods/` are found too).
+1. Drop `.mp3`, `.ogg` or `.wav` files into `mods/music` (loose files in `mods/` are found too).
    Name them `Artist - Title.ogg` to show the artist.
 2. Press **M** in game (rebindable) to open the menu.
 3. Keys (all rebindable in Settings > Keys or Options > Controls):

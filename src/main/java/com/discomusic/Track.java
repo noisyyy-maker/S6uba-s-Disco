@@ -25,7 +25,7 @@ public final class Track {
         return FabricLoader.getInstance().getGameDir().resolve("mods").resolve("music");
     }
 
-    /** Scans mods/music (and loose files directly in mods/) for .ogg and .wav files. */
+    /** Scans mods/music (and loose files directly in mods/) for .mp3, .ogg and .wav files. */
     public static List<Track> scan() {
         List<Track> out = new ArrayList<>();
         try { Files.createDirectories(dir()); } catch (IOException ignored) {}
@@ -33,7 +33,7 @@ public final class Track {
             try (Stream<Path> s = Files.list(d)) {
                 s.filter(Files::isRegularFile).forEach(p -> {
                     String n = p.getFileName().toString().toLowerCase(Locale.ROOT);
-                    if (n.endsWith(".ogg") || n.endsWith(".wav")) out.add(new Track(p));
+                    if (n.endsWith(".mp3") || n.endsWith(".ogg") || n.endsWith(".wav")) out.add(new Track(p));
                 });
             } catch (IOException ignored) {}
         }
